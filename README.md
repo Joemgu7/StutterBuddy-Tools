@@ -9,3 +9,4 @@ Set of tools to interact with the API of stutterbuddy.ch automatically. Feel fre
 ## Known Bugs
 
 * in debug mode the api sends back wrong values for video_name and notify_mail
+* resolution and threshold has to be provided as string instead of int
