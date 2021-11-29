@@ -13,7 +13,7 @@ import time
 # paste your personal api key which can be obtained at https://stutterbuddy.ch/api-doc
 API_KEY = ''
 # path to the file containing a dict of video_name:video_url pairs, ex: {'real_video':'https://yoururl.com/video.mp4}
-FILE_TO_LOAD = ''
+FILE_TO_LOAD = 'example_submission.json'
 # flag to debug the program and make sure that the requests go through as expected
 DEBUG = False
 
