@@ -13,9 +13,11 @@ import time
 # paste your personal api key which can be obtained at https://stutterbuddy.ch/api-doc
 API_KEY = ''
 # path to the file containing a dict of video_name:video_url pairs, ex: {'real_video':'https://yoururl.com/video.mp4}
+# note that your link should end on .mp4, .mkv or such, otherwise stutterbuddy is not capable of downloading the video
 FILE_TO_LOAD = 'example_submission.json'
 # flag to debug the program and make sure that the requests go through as expected
-DEBUG = False
+# note that in order to submit files and really convert them, set DEBUG = False
+DEBUG = True
 
 # this is the url of the stutterbuddy api DO NOT CHANGE
 URL = 'https://stutterbuddy.ch/api/submit/link'
@@ -31,14 +33,17 @@ def main():
         video_url = Data[video_name]
         r = requests.post(URL,
         # if needed, more parameters can be defined here and altered
+        # provide parameters as strings as in the example below
         # for more information visit https://stutterbuddy.ch/api-doc
                 json={
                     'api_key': API_KEY,
                     'video_url':video_url,
-                    'share_data':False,
+                    'threshold':'10',
+                    'resolution': '1080',
+                    'stutter_detection':'true',
+                    'share_data':'false',
                     'video_name': video_name,
-                    'debug':DEBUG,
-                    'resolution': '1080'
+                    'debug':'true' if DEBUG else 'false'
                     },
             )
 
