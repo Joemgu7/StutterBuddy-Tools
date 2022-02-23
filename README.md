@@ -10,5 +10,8 @@ Set of tools to interact with the API of stutterbuddy.ch. Feel free to report bu
 ## Important
 * Provide all arguments as strings
 
+## Dependencies
+* The python library requires requests-toolbelt to be installed (pip install requests-toolbelt)
+
 ## Known Bugs
 * None atm, but feel free to raise a new issue if you do encounter one (or many :))
