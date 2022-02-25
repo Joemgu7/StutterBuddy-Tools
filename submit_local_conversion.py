@@ -10,6 +10,7 @@ import argparse
 import requests
 import urllib.parse
 import os
+import shutil
 import json
 import time
 from stutterbuddy import make_submission_file, request_info_by_id, start_progress, progress, end_progress
@@ -51,7 +52,7 @@ def main():
 
     API_KEY = args.api_key
     FILE_PATH = args.file
-    TMP_DIR = 'tmp'
+    TMP_DIR = os.path.join('tmp')
 
     video_name = FILE_PATH
     use_profile = 'false'
@@ -138,7 +139,7 @@ def main():
                 ############ CUT VIDEO ############
                 start_progress('Cutting Video')
                 for i in range(len(splitlist)):
-                    progress(i/len(splitlist)+10)
+                    progress(i/len(splitlist)*90)
                     subprocess.run(splitlist[i], capture_output=False, shell=True)
 
                 ############ CREATE CLIPLIST TO MERGE VIDEOCLIPS ############
@@ -154,6 +155,7 @@ def main():
                 ############ MERGE AND MOVE VIDEOCLIP ############
 
                 #merge created splits
+                progress(95)
                 subprocess.run(f"ffmpeg -loglevel error -f concat -safe 0 -i {os.path.join(TMP_DIR, 'cliplist.txt')} {merging_codec} {os.path.splitext(FILE_PATH)[0]+'_stutterbuddy.mp4'}", capture_output=False, shell=True)
                 progress(100)
                 end_progress()
