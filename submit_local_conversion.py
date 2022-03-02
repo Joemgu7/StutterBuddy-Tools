@@ -35,7 +35,10 @@ def libx264_command(input_name, output_name, start, duration, scale='720x1080', 
     return f"ffmpeg -loglevel error -ss {start} -i {input_name} -t {duration} -vf 'fps=fps={fps},scale={scale.split('x')[1]}x{scale.split('x')[0]}' -c:v libx264 -preset veryfast -crf 19 {output_name}"
 
 def nvenc_command(input_name, output_name, start, duration, scale='720x1080', fps=25):
-    return f"ffmpeg -y -vsync 0 -hwaccel cuda -hwaccel_output_format cuda -resize {scale} -ss {start} -i {input_name} -t {duration} -c:v h264_nvenc -preset fast {output_name}"
+    scale_width = scale.split("x")[1]
+    scale_height = scale.split("x")[0]
+    #return f"ffmpeg -vsync 0 -hwaccel cuvid -c:v h264_cuvid -resize {scale} -ss {start} -i {input_name} -t {duration} -c:v h264_nvenc -preset fast {output_name}"
+    return f"ffmpeg -vsync 0 -hwaccel cuda -hwaccel_output_format cuda -ss {start} -i {input_name} -t {duration} -vf scale_npp={scale_width}:{scale_height} -c:v h264_nvenc -preset fast {output_name}"
 
 
 
@@ -146,7 +149,6 @@ def main():
                 cut_list = np.loadtxt(txt_path, dtype='float64')
 
                 # Codec to use for conversion, can be adjusted to your liking
-                CodecUsed = "-c:v libx264 -preset veryfast -crf 19"
                 merging_codec = "-c copy"
                 split_command = libx264_command
 
