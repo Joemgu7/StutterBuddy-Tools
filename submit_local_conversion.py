@@ -4,6 +4,7 @@
     Last Change: 
     version: 0.0.1
     script for local cutting of videos, needs stutterbuddy.py and ffmpeg
+    Need to install intel-media-va-driver-non-free for vaapi to work (scaling feature)
 """
 
 import argparse
@@ -24,12 +25,26 @@ def seconds_to_timestamp(seconds):
     hour, min = divmod(min, 60)
     return "%02d:%02d:%02d.%03d" % (hour, min, sec, ms)
 
+def vaapi_command(input_name, output_name, start, duration, scale='720x1080', fps=25):
+    scale_width = scale.split("x")[1]
+    scale_height = scale.split("x")[0]
+
+    return f"ffmpeg -loglevel error -init_hw_device vaapi=foo:/dev/dri/renderD128 -hwaccel vaapi -hwaccel_output_format vaapi -hwaccel_device foo -ss {start} -i {input_name} -t {duration} -filter_hw_device foo -vf 'format=nv12|vaapi,hwupload,fps=fps={fps},scale_vaapi=w={scale_width}:h={scale_height}' -c:v h264_vaapi {output_name}"
+
+def libx264_command(input_name, output_name, start, duration, scale='720x1080', fps=25):
+    return f"ffmpeg -loglevel error -ss {start} -i {input_name} -t {duration} -vf 'fps=fps={fps},scale={scale.split('x')[1]}x{scale.split('x')[0]}' -c:v libx264 -preset veryfast -crf 19 {output_name}"
+
+def nvenc_command(input_name, output_name, start, duration, scale='720x1080', fps=25):
+    return f"ffmpeg -y -vsync 0 -hwaccel cuda -hwaccel_output_format cuda -resize {scale} -ss {start} -i {input_name} -t {duration} -c:v h264_nvenc -preset fast {output_name}"
+
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-api_key",help="Your api_key from Stutterbuddy")
     parser.add_argument("-file",help="Path to a local file to be converted")
     parser.add_argument("-tmp_directory",help="Path to a temporary directory to create, default is 'tmp'")
-    parser.add_argument("-local_conversion",help=" 'cpu' or 'nvenc', Will use this machines ressources to convert the video, potentially being faster")
+    parser.add_argument("-local_conversion",help=" 'cpu', 'nvenc' or 'vaapi', Will use this machines ressources to convert the video, potentially being faster")
     parser.add_argument("-use_profile",help="Use your standard settings for submission")
     parser.add_argument("-resolution",help="Max resolution of output file")
     parser.add_argument("-threshold",help="Threshold to use, standard is 10")
@@ -40,6 +55,8 @@ def main():
     parser.add_argument("-detach_cuts",help="Do not merge cuts to a whole continuous video/audio file, standard is false")
     parser.add_argument("-cut_list",help="Only return a list with timestamps")
     parser.add_argument("-video_name",help="Which name do you want to give to your video")
+    parser.add_argument("-scale",help="Rescale when rendering, defaults to '720x1280' (same format)")
+
     args = parser.parse_args()
 
     if not args.api_key:
@@ -65,7 +82,8 @@ def main():
     notify_email = 'false' 
     detach_cuts = 'false' 
     cut_list = 'false' 
-    debug = 'false' 
+    debug = 'false'
+    scale = '720x1280'
 
     if args.tmp_directory:
         TMP_DIR = args.tmp_directory
@@ -87,6 +105,8 @@ def main():
         detach_cuts = args.detach_cuts
     if args.cut_list:
         cut_list = args.cut_list
+    if args.scale:
+        scale = args.scale
 
     if args.local_conversion:
         PrepareDirectories(TMP_DIR)
@@ -125,16 +145,20 @@ def main():
                 # Codec to use for conversion, can be adjusted to your liking
                 CodecUsed = "-c:v libx264 -preset veryfast -crf 19"
                 merging_codec = "-c copy"
+                split_command = libx264_command
 
                 if args.local_conversion == 'nvenc':
-                    CodecUsed = "-c:v h264_nvenc -preset fast"
+                    print('Using nvenc')
+                    split_command = nvenc_command
+                elif args.local_conversion == 'vaapi':
+                    print('Using vaapi')
+                    split_command = vaapi_command
 
                 conversion_extension = '.mp4'
 
                 splitlist = []
                 for i in range(len(cut_list)):
-                    split = f"ffmpeg -loglevel error -ss {cut_list[i][1]} -i {FILE_PATH} -t {cut_list[i][2]} {CodecUsed} {os.path.join(TMP_DIR, 'splits', str(i)+conversion_extension)}"
-                    splitlist.append(split)
+                    splitlist.append(split_command(FILE_PATH, os.path.join(TMP_DIR, 'splits', str(i)+conversion_extension), cut_list[i][1], cut_list[i][2]))
 
                 ############ CUT VIDEO ############
                 start_progress('Cutting Video')
