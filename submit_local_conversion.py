@@ -4,7 +4,7 @@
     Last Change: 
     version: 0.0.1
     script for local cutting of videos, needs stutterbuddy.py and ffmpeg
-    Need to install intel-media-va-driver-non-free for vaapi to work (scaling feature)
+    Need to install sudo apt install intel-media-va-driver-non-free for vaapi to work (scaling feature)
 """
 
 import argparse
@@ -56,6 +56,7 @@ def main():
     parser.add_argument("-cut_list",help="Only return a list with timestamps")
     parser.add_argument("-video_name",help="Which name do you want to give to your video")
     parser.add_argument("-scale",help="Rescale when rendering, defaults to '720x1280' (same format)")
+    parser.add_argument("-fps",help="fps of new video, defaults to 25")
 
     args = parser.parse_args()
 
@@ -84,6 +85,7 @@ def main():
     cut_list = 'false' 
     debug = 'false'
     scale = '720x1280'
+    fps = 25
 
     if args.tmp_directory:
         TMP_DIR = args.tmp_directory
@@ -109,6 +111,7 @@ def main():
         scale = args.scale
 
     if args.local_conversion:
+        start_time = time.time()
         PrepareDirectories(TMP_DIR)
         audio_path = os.path.join(TMP_DIR, 'tmp_audio.m4a')
         txt_path = os.path.join(TMP_DIR, 'cutlist.txt')
@@ -158,7 +161,7 @@ def main():
 
                 splitlist = []
                 for i in range(len(cut_list)):
-                    splitlist.append(split_command(FILE_PATH, os.path.join(TMP_DIR, 'splits', str(i)+conversion_extension), cut_list[i][1], cut_list[i][2]))
+                    splitlist.append(split_command(FILE_PATH, os.path.join(TMP_DIR, 'splits', str(i)+conversion_extension), cut_list[i][1], cut_list[i][2]), scale=scale, fps=fps)
 
                 ############ CUT VIDEO ############
                 start_progress('Cutting Video')
@@ -183,10 +186,11 @@ def main():
                 subprocess.run(f"ffmpeg -loglevel error -f concat -safe 0 -i {os.path.join(TMP_DIR, 'cliplist.txt')} {merging_codec} {os.path.splitext(FILE_PATH)[0]+'_stutterbuddy.mp4'}", capture_output=False, shell=True)
                 progress(100)
                 end_progress()
-
+                print(f"This conversion took {seconds_to_timestamp(round(time.time()-start_time))}")
                 break
             else:
                 time.sleep(10)
+        
     else:
         settings, upload_id = make_submission_file(
             path_to_file=FILE_PATH, API_KEY=API_KEY, use_profile=use_profile, resolution=resolution,
