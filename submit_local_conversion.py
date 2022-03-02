@@ -161,7 +161,7 @@ def main():
 
                 splitlist = []
                 for i in range(len(cut_list)):
-                    splitlist.append(split_command(FILE_PATH, os.path.join(TMP_DIR, 'splits', str(i)+conversion_extension), cut_list[i][1], cut_list[i][2]), scale=scale, fps=fps)
+                    splitlist.append(split_command(FILE_PATH, os.path.join(TMP_DIR, 'splits', str(i)+conversion_extension), cut_list[i][1], cut_list[i][2], scale=scale, fps=fps))
 
                 ############ CUT VIDEO ############
                 start_progress('Cutting Video')
